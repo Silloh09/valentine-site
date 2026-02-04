@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reveal</title>
+
+<!-- Preload yes.html and its assets (these help a LOT) -->
+<link rel="prefetch" href="yes.html" as="document">
+<link rel="preload" href="yes.gif" as="image">
+
+<!-- Preload the remote giphy used on yes.html -->
+<link rel="preconnect" href="https://media1.giphy.com">
+<link rel="dns-prefetch" href="https://media1.giphy.com">
+
+<style>
+  html, body { margin:0; padding:0; height:100%; background:transparent; }
+  body { overflow:hidden; }
+
+  video{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    background:transparent;
+    pointer-events:none;
+  }
+
+  .tap{
+    position:fixed;
+    inset:0;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    background:rgba(0,0,0,.4);
+    backdrop-filter: blur(6px);
+    cursor:pointer;
+    z-index:3;
+  }
+  .tap.hidden{ display:none; }
+
+  .fade{
+    position:fixed;
+    inset:0;
+    background:#e9cfd4; /* matches your site bg */
+    opacity:0;
+    pointer-events:none;
+    z-index:2;
+    transition: opacity 1200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .fade.on{ opacity:1; }
+</style>
+</head>
+
+<body>
+
+<video id="revealVideo" muted playsinline preload="auto">
+  <source src="reveal.webm" type="video/webm">
+</video>
+
+<div class="fade" id="fade"></div>
+<div class="tap hidden" id="tapToPlay">Tap to continue 💖</div>
+
+<script>
+  const video = document.getElementById("revealVideo");
+  const tap  = document.getElementById("tapToPlay");
+  const fade = document.getElementById("fade");
+
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name") || "Christina";
+
+  // 0:00:04:09 ≈ 4.3s (assuming 30fps)
+  const DURATION_MS = 4300;
+
+  // Start fade earlier + make it smooth
+  const FADE_MS = 1200;
+
+  // Same giphy URL you used in yes.html
+  const MAIN_GIPHY =
+    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3J2cnptbGJ0Ymc0c202YjcxY2E1YWprM3pqZXp6eWhoc2p6NXdzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SEgBHJJQ9biVr0tKJn/giphy.gif";
+
+  let scheduled = false;
+
+  function preloadYesAssets() {
+    // Preload remote giphy + local yes.gif
+    const img1 = new Image();
+    img1.src = "yes.gif";
+
+    const img2 = new Image();
+    img2.src = MAIN_GIPHY;
+
+    // Optional: warm up yes.html too
+    fetch("yes.html", { cache: "force-cache" }).catch(()=>{});
+  }
+
+  function goNext() {
+    window.location.href = `yes.html?name=${encodeURIComponent(name)}`;
+  }
+
+  function scheduleTransition() {
+    if (scheduled) return;
+    scheduled = true;
+
+    // Start preloading ASAP while video plays
+    preloadYesAssets();
+
+    // Start fade earlier so yes.html can be ready by the time it’s fully faded
+    const startFadeAt = Math.max(0, DURATION_MS - FADE_MS);
+
+    setTimeout(() => {
+      fade.classList.add("on");
+      setTimeout(goNext, FADE_MS);
+    }, startFadeAt);
+  }
+
+  async function tryPlay() {
+    try {
+      await video.play();
+      scheduleTransition();
+    } catch (e) {
+      tap.classList.remove("hidden");
+    }
+  }
+
+  // Attempt autoplay
+  tryPlay();
+
+  // Tap fallback
+  tap.addEventListener("click", async () => {
+    tap.classList.add("hidden");
+    await tryPlay();
+  });
+
+  // If ended fires early/late, still transition cleanly
+  video.addEventListener("ended", () => {
+    fade.classList.add("on");
+    setTimeout(goNext, FADE_MS);
+  });
+
+  // Hard failsafe
+  setTimeout(() => {
+    fade.classList.add("on");
+    setTimeout(goNext, FADE_MS);
+  }, DURATION_MS + 1000);
+</script>
+
+</body>
+</html>

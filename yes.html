@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>YAY!</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    height:100vh;
+    display:grid;
+    place-items:center;
+    background:#e9cfd4;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .card{
+    width:min(760px, 92vw);
+    padding:48px 32px 36px;
+    background:#f7f6f2; /* matches index.html */
+    border-radius:22px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.15);
+  }
+
+  /* TOP GIF (icon replacement) */
+  .top-gif{
+    width:140px;
+    height:140px;
+    margin:0 auto 18px;
+    display:block;
+    object-fit:contain;
+    filter: drop-shadow(0 12px 22px rgba(0,0,0,.2));
+  }
+
+  h1{
+    font-size:28px;
+    font-weight:900;
+    margin: 8px 0 12px;
+  }
+
+  .yay{
+    font-size:44px;
+    font-weight:1000;
+    letter-spacing:.5px;
+    margin: 0 0 22px;
+  }
+
+  .yay span{
+    font-size:28px;
+    vertical-align:middle;
+    margin-left:6px;
+  }
+
+  /* MAIN GIF */
+  .main-gif-wrap{
+    width:260px;
+    height:260px;
+    margin:0 auto;
+    display:grid;
+    place-items:center;
+  }
+
+  .main-gif-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    filter: drop-shadow(0 16px 32px rgba(0,0,0,.22));
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <!-- TOP ICON GIF -->
+  <img
+    class="top-gif"
+    src="yes.gif"
+    alt="happy valentine gif"
+  />
+
+  <h1><span id="name">Christina</span> will you be my valentine?</h1>
+  <div class="yay">YAY! <span>🎉</span></div>
+
+  <!-- MAIN GIF IMAGE -->
+  <div class="main-gif-wrap">
+    <img
+      src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3J2cnptbGJ0Ymc0c202YjcxY2E1YWprM3pqZXp6eWhoc2p6NXdzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SEgBHJJQ9biVr0tKJn/giphy.gif"
+      alt="celebration gif"
+    />
+  </div>
+
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name") || "Christina";
+  document.getElementById("name").textContent = name;
+</script>
+
+</body>
+</html>
