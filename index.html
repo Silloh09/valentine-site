@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Christina Valentine</title>
+
+<style>
+  :root{
+    --bg1:#ff7aa2; --bg2:#ff4d88;
+    --card:rgba(255,255,255,.22);
+    --stroke:rgba(255,255,255,.35);
+    --text:#fff; --shadow:0 20px 60px rgba(0,0,0,.18);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100svh; display:grid; place-items:center;
+    background:
+      radial-gradient(1200px 700px at 20% 15%, rgba(255,255,255,.35), transparent 50%),
+      radial-gradient(900px 650px at 80% 35%, rgba(255,255,255,.25), transparent 55%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    color:var(--text);
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* Floating hearts background */
+  .hearts{position:fixed; inset:-20vh 0 0 0; pointer-events:none; opacity:.35; filter:blur(.2px); z-index:0}
+  .heart{position:absolute; width:18px; height:18px; transform:rotate(45deg); background:rgba(255,255,255,.95); border-radius:4px; animation:floatUp linear infinite}
+  .heart::before,.heart::after{content:""; position:absolute; width:18px; height:18px; background:inherit; border-radius:50%}
+  .heart::before{left:-9px; top:0}
+  .heart::after{top:-9px; left:0}
+  @keyframes floatUp{from{transform:translateY(0) rotate(45deg)} to{transform:translateY(-120vh) rotate(45deg)}}
+
+  .card{
+    width:min(560px,92vw);
+    padding:clamp(18px,4vw,30px);
+    border-radius:28px;
+    background:var(--card);
+    border:1px solid var(--stroke);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    position:relative;
+    z-index:2;
+    transition: opacity 120ms ease;
+  }
+
+  /* ✅ Hide the entire card during reveal until first frame is visible */
+  body.revealing .card{
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .top-gif{
+    width:150px;
+    height:150px;
+    display:block;
+    margin:0 auto 10px;
+    object-fit:contain;
+    filter: drop-shadow(0 12px 22px rgba(0,0,0,.20));
+    transform: scaleX(1);
+    transition: transform 120ms cubic-bezier(0.4, 0, 0.6, 1);
+    will-change: transform;
+    pointer-events:none;
+  }
+
+  .title{
+    font-size:clamp(26px,4.5vw,42px);
+    margin:0 0 10px 0;
+    letter-spacing:-.02em;
+    line-height:1.08;
+    text-align:center;
+    text-shadow:0 8px 25px rgba(0,0,0,.22);
+    animation:fadeInUp 600ms ease both;
+  }
+  @keyframes fadeInUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+
+  .subtitle{
+    margin:0 0 18px 0;
+    text-align:center;
+    opacity:.95;
+    font-size:clamp(14px,2.3vw,16px);
+    min-height:1.2em;
+  }
+
+  .stage{
+    position:relative;
+    width:100%;
+    height:clamp(220px,44vw,320px);
+    border-radius:22px;
+    border:1px dashed rgba(255,255,255,.35);
+    background:rgba(255,255,255,.08);
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+  }
+
+  .buttons{position:absolute; inset:0}
+
+  .btn{
+    position:absolute;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:14px 18px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.40);
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    user-select:none;
+    touch-action:manipulation;
+    box-shadow:0 12px 28px rgba(0,0,0,.16);
+    transform:translate3d(var(--x,0px), var(--y,0px), 0);
+    transition:transform 260ms ease, background 200ms ease, opacity 240ms ease;
+    will-change:transform;
+  }
+  .btn:hover{background:rgba(255,255,255,.26)}
+  .btn:active{transform:translate3d(var(--x,0px), var(--y,0px), 0) scale(.98)}
+  .btn.yes{background:rgba(255,255,255,.32); border-color:rgba(255,255,255,.55)}
+  .btn.no{background:rgba(0,0,0,.10)}
+
+  .stage-gif{
+    width:min(380px,90%);
+    max-height:92%;
+    object-fit:contain;
+    display:none;
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,.20));
+  }
+  .stage.celebrate .buttons{display:none;}
+  .stage.celebrate .stage-gif{display:block;}
+
+  .note{margin-top:14px; text-align:center; opacity:.9; font-size:13px}
+  .toast{
+    margin-top:14px;
+    text-align:center;
+    font-weight:800;
+    font-size:clamp(16px,2.8vw,20px);
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity 220ms ease, transform 220ms ease;
+  }
+  .toast.show{opacity:1; transform:translateY(0)}
+
+  .heart-fireworks{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    display:none;
+    z-index:7;
+  }
+  .heart-fireworks.show{display:block}
+
+  /* ✅ Reveal overlay: show instantly (no fade-in delay) */
+  .reveal{
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .reveal.show{
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .reveal video{
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    background: transparent;
+  }
+
+  .unmute{
+    position:fixed;
+    right:16px;
+    bottom:16px;
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.35);
+    background:rgba(0,0,0,.25);
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+    z-index:1000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display:none;
+  }
+  .reveal.ready .unmute{ display:block; }
+
+  @media (prefers-reduced-motion: reduce){
+    .btn,.toast,.top-gif{transition:none}
+    .heart{animation:none}
+    .title{animation:none}
+  }
+</style>
+</head>
+
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="card">
+    <img class="top-gif" id="gifFace" src="giphy2.gif" alt="valentine gif" />
+
+    <h1 class="title" id="question">Christina, will you be my valentine? 💘</h1>
+    <p class="subtitle" id="subtitle">Don’t overthink it…</p>
+
+    <div class="stage" id="stage" aria-label="Valentine stage">
+      <div class="buttons" id="buttons">
+        <button class="btn yes" id="yesBtn" type="button">Yes 💖</button>
+        <button class="btn no" id="noBtn" type="button">No 🙃</button>
+      </div>
+
+      <img
+        class="stage-gif"
+        id="stageGif"
+        alt="celebration gif"
+        src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3J2cnptbGJ0Ymc0c202YjcxY2E1YWprM3pqZXp6eWhoc2p6NXdzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SEgBHJJQ9biVr0tKJn/giphy.gif"
+      />
+    </div>
+
+    <div class="toast" id="toast">Yay!! 💞🥳</div>
+    <div class="note" id="note">"No" seems a bit shy 😈</div>
+  </div>
+
+  <div class="reveal" id="reveal" aria-hidden="true">
+    <video id="revealVideo" playsinline preload="auto" muted>
+      <source src="reveal.webm" type="video/webm" />
+    </video>
+    <button class="unmute" id="unmuteBtn" type="button">🔊 Unmute</button>
+  </div>
+
+  <canvas class="heart-fireworks" id="heartFireworks"></canvas>
+
+<script>
+  const rand = (min, max) => Math.random() * (max - min) + min;
+
+  const isTouchDevice =
+    "ontouchstart" in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+
+  const stage = document.getElementById("stage");
+  const yesBtn = document.getElementById("yesBtn");
+  const noBtn = document.getElementById("noBtn");
+
+  const toast = document.getElementById("toast");
+  const question = document.getElementById("question");
+  const subtitle = document.getElementById("subtitle");
+  const note = document.getElementById("note");
+  const gif = document.getElementById("gifFace");
+
+  const reveal = document.getElementById("reveal");
+  const revealVideo = document.getElementById("revealVideo");
+  const unmuteBtn = document.getElementById("unmuteBtn");
+
+  const GIF_KNEW_IT = "yes.gif";
+  new Image().src = GIF_KNEW_IT;
+
+  // ✅ Wait until the FIRST VIDEO FRAME is actually rendered
+  function waitForFirstFrame(video) {
+    return new Promise((resolve) => {
+      // Best case: supported in modern browsers
+      if (typeof video.requestVideoFrameCallback === "function") {
+        video.requestVideoFrameCallback(() => resolve());
+        return;
+      }
+
+      // Fallback: wait until video time actually advances
+      const onTime = () => {
+        if (video.currentTime > 0) {
+          video.removeEventListener("timeupdate", onTime);
+          resolve();
+        }
+      };
+      video.addEventListener("timeupdate", onTime);
+
+      // Safety fallback
+      setTimeout(resolve, 180);
+    });
+  }
+
+  // --- Button positioning ---
+  const setButtonPos = (btn, x, y) => {
+    btn.style.setProperty("--x", `${x}px`);
+    btn.style.setProperty("--y", `${y}px`);
+    btn.dataset.x = String(x);
+    btn.dataset.y = String(y);
+  };
+  const getStageRect = () => stage.getBoundingClientRect();
+
+  function placeInitial() {
+    const r = getStageRect();
+    const yesX = r.width * 0.32 - yesBtn.offsetWidth / 2;
+    const yesY = r.height * 0.58 - yesBtn.offsetHeight / 2;
+    const noX  = r.width * 0.68 - noBtn.offsetWidth / 2;
+    const noY  = r.height * 0.58 - noBtn.offsetHeight / 2;
+    setButtonPos(yesBtn, yesX, yesY);
+    setButtonPos(noBtn,  noX,  noY);
+  }
+
+  function boundedRandomPos(btn) {
+    const r = getStageRect();
+    const pad = 14;
+    const maxX = r.width - btn.offsetWidth - pad;
+    const maxY = r.height - btn.offsetHeight - pad;
+    return { x: rand(pad, Math.max(pad, maxX)), y: rand(pad, Math.max(pad, maxY)) };
+  }
+
+  function moveNoButtonAwayFrom(pointX, pointY) {
+    const r = getStageRect();
+    const currentX = Number(noBtn.dataset.x || 0);
+    const currentY = Number(noBtn.dataset.y || 0);
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < 10; i++) {
+      const c = boundedRandomPos(noBtn);
+      const cx = c.x + noBtn.offsetWidth / 2;
+      const cy = c.y + noBtn.offsetHeight / 2;
+
+      const px = pointX - r.left;
+      const py = pointY - r.top;
+
+      const dist = Math.hypot(cx - px, cy - py);
+      const jump = Math.hypot(c.x - currentX, c.y - currentY);
+      const score = dist + jump * 0.25;
+
+      if (score > bestScore) { bestScore = score; best = c; }
+    }
+    if (!best) best = boundedRandomPos(noBtn);
+    setButtonPos(noBtn, best.x, best.y);
+  }
+
+  function bindDesktopEvade() {
+    const PROXIMITY_PX = 90;
+    stage.addEventListener("mousemove", (e) => {
+      const r = getStageRect();
+      const bx = Number(noBtn.dataset.x || 0);
+      const by = Number(noBtn.dataset.y || 0);
+
+      const bcx = bx + noBtn.offsetWidth / 2;
+      const bcy = by + noBtn.offsetHeight / 2;
+
+      const mx = e.clientX - r.left;
+      const my = e.clientY - r.top;
+
+      const dist = Math.hypot(bcx - mx, bcy - my);
+      if (dist < PROXIMITY_PX) moveNoButtonAwayFrom(e.clientX, e.clientY);
+    });
+  }
+
+  let noTapCount = 0;
+  function bindMobileEvade() {
+    note.textContent = "No seems a bit shy 😅";
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      noTapCount++;
+      const t = e.touches && e.touches[0];
+      const px = t ? t.clientX : (getStageRect().left + getStageRect().width / 2);
+      const py = t ? t.clientY : (getStageRect().top + getStageRect().height / 2);
+
+      if (noTapCount < 4) moveNoButtonAwayFrom(px, py);
+      else {
+        noBtn.style.opacity = "0";
+        noBtn.style.pointerEvents = "none";
+        subtitle.textContent = "Alright alright 😭";
+      }
+    }, { passive: false });
+  }
+
+  // Hearts background
+  function makeHearts() {
+    const container = document.getElementById("hearts");
+    const count = 18;
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.style.left = `${rand(0, 100)}vw`;
+      h.style.top = `${rand(60, 140)}vh`;
+      h.style.animationDuration = `${rand(8, 15)}s`;
+      h.style.animationDelay = `${rand(0, 8)}s`;
+      const size = rand(12, 22);
+      h.style.width = `${size}px`;
+      h.style.height = `${size}px`;
+      container.appendChild(h);
+    }
+  }
+
+  // GIF faces cursor
+  document.addEventListener("mousemove", (e) => {
+    const r = gif.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    gif.style.transform = (e.clientX > cx) ? "scaleX(-1)" : "scaleX(1)";
+  });
+
+  // Firework hearts
+  function launchHeartFireworksBurstSeries() {
+    const canvas = document.getElementById("heartFireworks");
+    const ctx = canvas.getContext("2d");
+    canvas.classList.add("show");
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+
+    const particles = [];
+    const grav = 0.018;
+
+    const spawnBurst = () => {
+      const cx = rand(canvas.width * 0.15, canvas.width * 0.85);
+      const cy = rand(canvas.height * 0.20, canvas.height * 0.65);
+      const count = 34;
+
+      for (let i = 0; i < count; i++) {
+        const a = (Math.PI * 2 * i) / count + rand(-0.05, 0.05);
+        const speed = rand(1.8, 3.8);
+        particles.push({
+          x: cx, y: cy,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed,
+          size: rand(6, 11),
+          rot: rand(0, Math.PI * 2),
+          vr: rand(-0.10, 0.10),
+          life: rand(55, 90),
+        });
+      }
+    };
+
+    function drawHeart(x, y, size, alpha, rot) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.rotate(Math.PI / 4);
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+
+      ctx.beginPath();
+      ctx.arc(-size / 2, -size / 2, size / 2, 0, Math.PI * 2);
+      ctx.arc(size / 2, -size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const burstCount = 12;
+    const burstEveryMs = 160;
+    for (let i = 0; i < burstCount; i++) setTimeout(spawnBurst, i * burstEveryMs);
+
+    const start = performance.now();
+    const runForMs = 2600;
+
+    function tick(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.99;
+        p.vy *= 0.99;
+        p.vy += grav;
+        p.rot += p.vr;
+        p.life--;
+
+        const alpha = Math.max(0, Math.min(1, p.life / 40));
+        if (p.life > 0) drawHeart(p.x, p.y, p.size, alpha, p.rot);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        if (particles[i].life <= 0) particles.splice(i, 1);
+      }
+
+      if (now - start < runForMs || particles.length > 0) requestAnimationFrame(tick);
+      else {
+        canvas.classList.remove("show");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    window.addEventListener("resize", resize, { once: true });
+    requestAnimationFrame(tick);
+  }
+
+  // ✅ YES click: hide card, show overlay immediately, ONLY update after first frame
+  let locked = false;
+  yesBtn.addEventListener("click", async () => {
+    if (locked) return;
+    locked = true;
+
+    noBtn.style.pointerEvents = "none";
+    yesBtn.style.pointerEvents = "none";
+    noBtn.style.opacity = "0.35";
+
+    document.body.classList.add("revealing");
+
+    reveal.classList.add("show");
+    reveal.setAttribute("aria-hidden", "false");
+    try { revealVideo.currentTime = 0; } catch {}
+
+    try {
+      await revealVideo.play();
+    } catch {
+      subtitle.textContent = "Tap the screen 😅";
+      reveal.addEventListener("click", () => revealVideo.play(), { once: true });
+      return;
+    }
+
+    // ✅ WAIT FOR THE FIRST RENDERED FRAME
+    await waitForFirstFrame(revealVideo);
+
+    reveal.classList.add("ready");
+
+    // ✅ NOW update the page (no flash possible)
+    toast.classList.add("show");
+    question.textContent = "Knew it 😌💖";
+    subtitle.textContent = "";
+
+    gif.src = GIF_KNEW_IT + "?v=" + Date.now();
+    stage.classList.add("celebrate");
+    launchHeartFireworksBurstSeries();
+
+    // ✅ show the card again after overlay is already showing frames
+    document.body.classList.remove("revealing");
+  });
+
+  noBtn.addEventListener("click", () => {
+    subtitle.textContent = "Nice try 😈";
+  });
+
+  unmuteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    revealVideo.muted = false;
+    unmuteBtn.style.display = "none";
+  });
+
+  makeHearts();
+  requestAnimationFrame(() => {
+    placeInitial();
+    if (isTouchDevice) bindMobileEvade();
+    else bindDesktopEvade();
+  });
+</script>
+</body>
+</html>
